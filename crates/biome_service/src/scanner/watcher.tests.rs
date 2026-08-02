@@ -161,3 +161,28 @@ fn should_index_on_create_and_unload_on_delete() {
         );
     });
 }
+
+#[test]
+fn should_ignore_git_internal_events() {
+    let fs = TemporaryFs::new("should_ignore_git_internal_events");
+    let os_fs = fs.create_os();
+    let project_path = Utf8Path::new(fs.cli_path());
+
+    let (mock_bridge, _bridge_rx) = MockWorkspaceWatcherBridge::new(
+        &os_fs,
+        ProjectKey::new(),
+        ScanKind::Project,
+    );
+
+    let git_index_lock = project_path.join(".git/index.lock");
+    let source_path = project_path.join("ui/something.js");
+    let watched = Watcher::watched_paths(
+        &mock_bridge,
+        vec![
+            git_index_lock.into_std_path_buf(),
+            source_path.clone().into_std_path_buf(),
+        ],
+    );
+
+    assert_eq!(watched, vec![source_path]);
+}
