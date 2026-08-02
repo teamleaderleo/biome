@@ -44,7 +44,7 @@ diff --git a/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditi
 new file mode 100644
 --- /dev/null
 +++ b/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts
-@@ -0,0 +1,37 @@
+@@ -0,0 +1,22 @@
 +const booleanBox = { current: false };
 +if (booleanBox.current) {
 +  console.log("already set");
@@ -68,18 +68,3 @@ new file mode 100644
 +  console.log("already ready");
 +}
 +nested.state.ready = true;
-+
-+const immutableBoolean = { current: false } as const;
-+if (immutableBoolean.current) {
-+  console.log("unreachable");
-+}
-+
-+const immutableNumber = { current: 0 } as const;
-+if (immutableNumber.current) {
-+  console.log("unreachable");
-+}
-+
-+const immutableString = { current: "" } as const;
-+if (immutableString.current) {
-+  console.log("unreachable");
-+}
