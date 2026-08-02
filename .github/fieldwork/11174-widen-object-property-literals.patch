@@ -1,0 +1,85 @@
+diff --git a/crates/biome_js_type_info/src/local_inference.rs b/crates/biome_js_type_info/src/local_inference.rs
+--- a/crates/biome_js_type_info/src/local_inference.rs
++++ b/crates/biome_js_type_info/src/local_inference.rs
+@@ -1627,17 +1627,32 @@ impl TypeMember {
+                 })
+                 .map(|kind| {
+                     let value = member.value().ok();
+-                    let kind = if value.as_ref().is_some_and(expression_is_const_assertion) {
++                    let is_const_asserted =
++                        value.as_ref().is_some_and(expression_is_const_assertion);
++                    let kind = if is_const_asserted {
+                         kind.with_const_asserted()
+                     } else {
+                         kind
+                     };
+                     Self {
+                         kind,
+                         ty: value
+                             .map(|value| {
+-                                resolver.reference_to_resolved_expression(scope_id, &value)
++                                if !is_const_asserted {
++                                    let widened = match &value {
++                                        AnyJsExpression::AnyJsLiteralExpression(
++                                            AnyJsLiteralExpression::JsBooleanLiteralExpression(_),
++                                        ) => Some(TypeData::boolean()),
++                                        AnyJsExpression::AnyJsLiteralExpression(
++                                            AnyJsLiteralExpression::JsNumberLiteralExpression(_),
++                                        ) => Some(TypeData::number()),
++                                        AnyJsExpression::AnyJsLiteralExpression(
++                                            AnyJsLiteralExpression::JsStringLiteralExpression(_),
++                                        ) => Some(TypeData::string()),
++                                        _ => None,
++                                    };
++                                    if let Some(widened) = widened {
++                                        return resolver.reference_to_owned_data(widened);
++                                    }
++                                }
++                                resolver.reference_to_resolved_expression(scope_id, &value)
+                             })
+                             .unwrap_or_default(),
+                     }
+                 }),
+diff --git a/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts b/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts
+new file mode 100644
+--- /dev/null
++++ b/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts
+@@ -0,0 +1,37 @@
++const booleanBox = { current: false };
++if (booleanBox.current) {
++  console.log("already set");
++}
++booleanBox.current = true;
++
++const numberBox = { current: 0 };
++if (numberBox.current) {
++  console.log("already nonzero");
++}
++numberBox.current = 1;
++
++const stringBox = { current: "" };
++if (stringBox.current) {
++  console.log("already nonempty");
++}
++stringBox.current = "ready";
++
++const nested = { state: { ready: false } };
++if (nested.state.ready) {
++  console.log("already ready");
++}
++nested.state.ready = true;
++
++const immutableBoolean = { current: false } as const;
++if (immutableBoolean.current) {
++  console.log("unreachable");
++}
++
++const immutableNumber = { current: 0 } as const;
++if (immutableNumber.current) {
++  console.log("unreachable");
++}
++
++const immutableString = { current: "" } as const;
++if (immutableString.current) {
++  console.log("unreachable");
++}
