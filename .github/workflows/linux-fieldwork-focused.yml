@@ -1,0 +1,53 @@
+name: Linux Fieldwork focused tests
+
+on:
+  pull_request:
+    branches:
+      - ci/biome-focused-base
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-fieldwork-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  INSTA_UPDATE: no
+
+jobs:
+  member-mutation:
+    if: github.head_ref == 'ci/biome-11174-member-mutation'
+    name: noUnnecessaryConditions member mutation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - name: Install Rust toolchain
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          cache-base: ci/biome-focused-base
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run focused analyzer tests
+        run: cargo test -p biome_js_analyze no_unnecessary_conditions -- --nocapture
+
+  git-watch-events:
+    if: github.head_ref == 'ci/biome-11110-git-watch-noise'
+    name: Git-internal watcher events
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+      - name: Install Rust toolchain
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          cache-base: ci/biome-focused-base
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run focused watcher test
+        run: cargo test -p biome_service should_ignore_git_internal_events -- --nocapture
