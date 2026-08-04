@@ -50,4 +50,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run focused watcher test
-        run: cargo test -p biome_service should_ignore_git_internal_events -- --nocapture
+        run: cargo test -p biome_service --features stable should_ignore_git_internal_events -- --nocapture
