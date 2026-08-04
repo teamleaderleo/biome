@@ -162,6 +162,8 @@ fn should_index_on_create_and_unload_on_delete() {
     });
 }
 
+// Git metadata churn should not be forwarded as source-file work, while a
+// regular project path in the same notification remains observable.
 #[test]
 fn should_ignore_git_internal_events() {
     let fs = TemporaryFs::new("should_ignore_git_internal_events");
