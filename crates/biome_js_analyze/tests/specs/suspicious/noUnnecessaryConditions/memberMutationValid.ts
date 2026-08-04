@@ -1,3 +1,5 @@
+// should not generate diagnostics
+
 const guard = { current: false };
 
 export function runOnce() {
