@@ -27,11 +27,12 @@ assert const_check < widen_check < resolved_fallback
 assert "if !is_const_asserted" in body
 assert "TypeData::number()" in body
 assert "TypeData::string()" in body
-print("mutable primitive literals widen; const assertions retain literal inference")
+print("mutable primitive object literals widen; const assertions retain literal inference")
+print("generic-returned object properties remain outside this candidate")
 PY
 
-cargo fmt --check -- crates/biome_js_type_info/src/local_inference.rs crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts
+cargo fmt --all --check
 cargo check -p biome_js_type_info
 cargo test -p biome_js_analyze no_unnecessary_conditions -- --nocapture
 
-printf '%s\n' 'Biome #11174 object-property candidate applies and passes focused gates'
+printf '%s\n' 'Biome #11174 direct-object candidate applies and passes focused gates'
