@@ -1,0 +1,44 @@
+name: Linux Fieldwork Git-internal watcher candidate
+
+on:
+  push:
+    branches:
+      - candidate/biome-11110-ignore-git-internals-restack
+    paths:
+      - .github/fieldwork/11110-**
+      - .github/workflows/linux-fieldwork-git-internal-candidate.yml
+  pull_request:
+    paths:
+      - .github/fieldwork/11110-**
+      - .github/workflows/linux-fieldwork-git-internal-candidate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: biome-11110-git-internal-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  INSTA_UPDATE: no
+
+jobs:
+  scoped-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout controlled candidate
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Install Rust toolchain
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          cache-base: biome-11110-git-internal
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply and test scoped candidate
+        run: bash .github/fieldwork/11110-check-git-internal-candidate.sh
