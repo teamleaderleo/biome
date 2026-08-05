@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout test branch
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
       - name: Install Rust toolchain
         uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
         with:
@@ -36,18 +38,20 @@ jobs:
         run: cargo test -p biome_js_analyze no_unnecessary_conditions -- --nocapture
 
   git-watch-events:
-    if: github.head_ref == 'ci/biome-11110-git-watch-noise'
+    if: github.head_ref == 'ci/biome-11110-git-watch-noise-restack'
     name: Git-internal watcher events
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 50
     steps:
       - name: Checkout test branch
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
       - name: Install Rust toolchain
         uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
         with:
           cache-base: ci/biome-focused-base
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run focused watcher test
-        run: cargo test -p biome_service should_ignore_git_internal_events -- --nocapture
+      - name: Run focused watcher test with shipped features
+        run: cargo test -p biome_service --features stable should_ignore_git_internal_events -- --nocapture
