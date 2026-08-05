@@ -22,7 +22,7 @@ env:
 
 jobs:
   object-literal-candidate:
-    if: github.ref_name == 'candidate/biome-11174-widen-object-property-literals'
+    if: github.ref_name == 'candidate/biome-11174-widen-object-property-literals' || github.head_ref == 'candidate/biome-11174-widen-object-property-literals'
     name: noUnnecessaryConditions direct object candidate
     runs-on: ubuntu-24.04
     timeout-minutes: 50
