@@ -2,14 +2,12 @@
 set -euo pipefail
 
 repo_root=$(git rev-parse --show-toplevel)
-patch_file="$repo_root/.github/fieldwork/11174-widen-object-property-literals.patch"
 
 cd "$repo_root"
 git diff --quiet
 git diff --cached --quiet
 
-git apply --check "$patch_file"
-git apply "$patch_file"
+python3 .github/fieldwork/11174-apply-direct-object-candidate.py
 trap 'git checkout -- crates/biome_js_type_info/src/local_inference.rs; rm -f crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts' EXIT
 
 python3 - <<'PY'
