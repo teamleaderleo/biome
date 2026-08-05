@@ -8,7 +8,7 @@ git diff --quiet
 git diff --cached --quiet
 
 python3 .github/fieldwork/11174-apply-direct-object-candidate.py
-trap 'git checkout -- crates/biome_js_type_info/src/local_inference.rs; rm -f crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts' EXIT
+trap 'git checkout -- crates/biome_js_type_info/src/local_inference.rs; rm -f crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts.snap' EXIT
 
 python3 - <<'PY'
 from pathlib import Path
