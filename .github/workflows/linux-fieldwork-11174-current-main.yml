@@ -58,6 +58,9 @@ jobs:
           (
             cd source
             python3 ../carrier/.github/fieldwork/11174-current-main/apply_direct_object_candidate.py
+            git add -N \
+              crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts \
+              crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts.snap
           )
           printf '%s\n' \
             crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts \
