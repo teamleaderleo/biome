@@ -1,6 +1,9 @@
 name: Linux Fieldwork focused tests
 
 on:
+  push:
+    branches:
+      - candidate/biome-11174-widen-object-property-literals
   pull_request:
     branches:
       - ci/biome-focused-base
@@ -9,7 +12,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: linux-fieldwork-${{ github.event.pull_request.number }}
+  group: linux-fieldwork-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -18,6 +21,25 @@ env:
   INSTA_UPDATE: no
 
 jobs:
+  object-literal-candidate:
+    if: github.ref_name == 'candidate/biome-11174-widen-object-property-literals' || github.head_ref == 'candidate/biome-11174-widen-object-property-literals'
+    name: noUnnecessaryConditions direct object candidate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout candidate carrier
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
+      - name: Install Rust toolchain
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          cache-base: biome-11174-object-candidate
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply and test scoped candidate
+        run: bash .github/fieldwork/11174-check-object-candidate.sh
+
   member-mutation:
     if: github.head_ref == 'ci/biome-11174-member-mutation'
     name: noUnnecessaryConditions member mutation
@@ -26,6 +48,8 @@ jobs:
     steps:
       - name: Checkout test branch
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
       - name: Install Rust toolchain
         uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
         with:
@@ -43,6 +67,8 @@ jobs:
     steps:
       - name: Checkout test branch
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
       - name: Install Rust toolchain
         uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
         with:
@@ -50,4 +76,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run focused watcher test
-        run: cargo test -p biome_service should_ignore_git_internal_events -- --nocapture
+        run: cargo test -p biome_service --features stable should_ignore_git_internal_events -- --nocapture
