@@ -181,17 +181,11 @@ fn should_map_ignored_symlink_alias_to_real_workspace_path() {
     symlink(&real_dir, &alias_dir).expect("can create workspace alias symlink");
 
     let os_fs = fs.create_os();
-    let (mut mock_bridge, _bridge_rx) = MockWorkspaceWatcherBridge::new(
-        &os_fs,
-        ProjectKey::new(),
-        ScanKind::Project,
-    );
+    let (mut mock_bridge, _bridge_rx) =
+        MockWorkspaceWatcherBridge::new(&os_fs, ProjectKey::new(), ScanKind::Project);
     mock_bridge.ignored_paths.insert(alias_file.clone());
 
-    let watched = Watcher::watched_paths(
-        &mock_bridge,
-        vec![alias_file.into_std_path_buf()],
-    );
+    let watched = Watcher::watched_paths(&mock_bridge, vec![alias_file.into_std_path_buf()]);
 
     assert_eq!(watched, vec![real_file]);
 }
