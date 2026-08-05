@@ -161,3 +161,37 @@ fn should_index_on_create_and_unload_on_delete() {
         );
     });
 }
+
+#[cfg(unix)]
+#[test]
+fn should_map_ignored_symlink_alias_to_real_workspace_path() {
+    use std::os::unix::fs::symlink;
+
+    let fs = TemporaryFs::new("should_map_ignored_symlink_alias_to_real_workspace_path");
+    let project_path = Utf8Path::new(fs.cli_path());
+    let real_dir = project_path.join("sub");
+    let real_file = real_dir.join("c.js");
+    let alias_dir = project_path.join("node_modules/sub");
+    let alias_file = alias_dir.join("c.js");
+
+    fs::create_dir_all(&real_dir).expect("can create real workspace directory");
+    fs::write(&real_file, "debugger;\n").expect("can create real workspace file");
+    fs::create_dir_all(alias_dir.parent().expect("alias has parent"))
+        .expect("can create node_modules directory");
+    symlink(&real_dir, &alias_dir).expect("can create workspace alias symlink");
+
+    let os_fs = fs.create_os();
+    let (mut mock_bridge, _bridge_rx) = MockWorkspaceWatcherBridge::new(
+        &os_fs,
+        ProjectKey::new(),
+        ScanKind::Project,
+    );
+    mock_bridge.ignored_paths.insert(alias_file.clone());
+
+    let watched = Watcher::watched_paths(
+        &mock_bridge,
+        vec![alias_file.into_std_path_buf()],
+    );
+
+    assert_eq!(watched, vec![real_file]);
+}
