@@ -78,6 +78,7 @@ jobs:
         working-directory: source
         run: |
           set -euo pipefail
+          test_name=should_ignore_git_internal_events
           rustup component add rustfmt
           cargo fmt --all
           cargo fmt --all --check
@@ -88,8 +89,10 @@ jobs:
             crates/biome_service/src/scanner/watcher.rs \
             crates/biome_service/src/scanner/watcher.tests.rs \
             >../artifacts/current-main/candidate.patch
-          cargo test -p biome_service --features stable \
-            should_ignore_git_internal_events -- --exact --nocapture
+          cargo test -p biome_service --features stable "$test_name" -- --list \
+            | tee /tmp/git-internal-tests.txt
+          grep -F "$test_name: test" /tmp/git-internal-tests.txt
+          cargo test -p biome_service --features stable "$test_name" -- --nocapture
 
       - name: Verify bounded candidate diff
         if: always()
