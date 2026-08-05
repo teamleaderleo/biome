@@ -26,6 +26,7 @@ print("exact .git component filtering precedes project and ignore resolution")
 print("substring-like paths remain covered by reversing controls")
 PY
 
+rustup component add rustfmt
 cargo fmt --all --check
 cargo test -p biome_service --features stable should_ignore_git_internal_events -- --nocapture
 
