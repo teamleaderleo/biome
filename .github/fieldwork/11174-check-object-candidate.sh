@@ -29,6 +29,7 @@ print("mutable primitive object literals widen; const assertions retain literal 
 print("generic-returned object properties remain outside this candidate")
 PY
 
+rustup component add rustfmt
 cargo fmt --all --check
 cargo check -p biome_js_type_info
 cargo test -p biome_js_analyze no_unnecessary_conditions -- --nocapture
