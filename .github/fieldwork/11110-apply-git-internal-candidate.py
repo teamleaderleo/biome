@@ -33,11 +33,8 @@ fn should_ignore_git_internal_events() {
     let os_fs = fs.create_os();
     let project_path = Utf8Path::new(fs.cli_path());
 
-    let (mock_bridge, _bridge_rx) = MockWorkspaceWatcherBridge::new(
-        &os_fs,
-        ProjectKey::new(),
-        ScanKind::Project,
-    );
+    let (mock_bridge, _bridge_rx) =
+        MockWorkspaceWatcherBridge::new(&os_fs, ProjectKey::new(), ScanKind::Project);
 
     let source_path = project_path.join("ui/something.js");
     let github_path = project_path.join(".github/workflows/ci.yml");
@@ -75,7 +72,7 @@ def main() -> None:
     tests = TESTS.read_text(encoding="utf-8")
     if "fn should_ignore_git_internal_events()" in tests:
         raise SystemExit("watcher discriminator already exists")
-    TESTS.write_text(tests.rstrip() + TEST + "\n", encoding="utf-8")
+    TESTS.write_text(tests.rstrip() + TEST, encoding="utf-8")
 
     print(SOURCE)
     print(TESTS)
