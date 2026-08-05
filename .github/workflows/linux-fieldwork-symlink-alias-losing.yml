@@ -42,7 +42,10 @@ jobs:
       - name: Run stable-feature symlink alias discriminator
         run: |
           set -euo pipefail
+          test_name=should_map_ignored_symlink_alias_to_real_workspace_path
           rustup component add rustfmt
           cargo fmt --all --check
-          cargo test -p biome_service --features stable \
-            should_map_ignored_symlink_alias_to_real_workspace_path -- --exact --nocapture
+          cargo test -p biome_service --features stable "$test_name" -- --list \
+            | tee /tmp/symlink-alias-tests.txt
+          grep -F "$test_name: test" /tmp/symlink-alias-tests.txt
+          cargo test -p biome_service --features stable "$test_name" -- --nocapture
