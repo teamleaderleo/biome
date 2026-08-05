@@ -1,0 +1,115 @@
+name: Linux Fieldwork 11174 current-main candidate
+
+on:
+  push:
+    branches:
+      - fieldwork/11174-current-main-direct-object
+    paths:
+      - .github/fieldwork/11174-current-main/**
+      - .github/workflows/linux-fieldwork-11174-current-main.yml
+  pull_request:
+    paths:
+      - .github/fieldwork/11174-current-main/**
+      - .github/workflows/linux-fieldwork-11174-current-main.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: biome-11174-current-main-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PUBLIC_MAIN: 4a0bc5c46e6dbbefd17fa133ea426aa41f0a23f8
+  TYPE_INFO_BLOB: c8559d60bd1fb322ab4bf82394878362bad84a3b
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  INSTA_UPDATE: no
+
+jobs:
+  current-main-candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Check out controlled carrier
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          path: carrier
+
+      - name: Check out exact public main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          repository: biomejs/biome
+          ref: ${{ env.PUBLIC_MAIN }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: source
+
+      - name: Verify identity and apply candidate
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/current-main
+          test "$(git -C source rev-parse HEAD)" = "$PUBLIC_MAIN"
+          test "$(git -C source hash-object crates/biome_js_type_info/src/local_inference.rs)" = "$TYPE_INFO_BLOB"
+          test ! -e source/crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts
+          (
+            cd source
+            python3 ../carrier/.github/fieldwork/11174-current-main/apply_direct_object_candidate.py
+          )
+          printf '%s\n' \
+            crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts \
+            crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts.snap \
+            crates/biome_js_type_info/src/local_inference.rs \
+            | sort >expected-files.txt
+          git -C source diff --name-only | sort >changed-files.txt
+          diff -u expected-files.txt changed-files.txt
+
+      - name: Install Rust toolchain
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3
+        with:
+          cache-base: biome-11174-current-main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Materialize formatted source and run focused gates
+        working-directory: source
+        run: |
+          set -euo pipefail
+          rustup component add rustfmt
+          cargo fmt --all
+          cargo fmt --all --check
+          git diff --check
+          git diff --name-only | sort >../formatted-files.txt
+          diff -u ../expected-files.txt ../formatted-files.txt
+          git diff -- \
+            crates/biome_js_type_info/src/local_inference.rs \
+            crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts \
+            crates/biome_js_analyze/tests/specs/suspicious/noUnnecessaryConditions/memberObjectMutationValid.ts.snap \
+            >../artifacts/current-main/candidate.patch
+          cargo check -p biome_js_type_info
+          cargo test -p biome_js_analyze no_unnecessary_conditions -- --nocapture
+
+      - name: Verify bounded candidate diff
+        if: always()
+        run: |
+          set -euo pipefail
+          if test -d source/.git; then
+            git -C source diff --check
+            git -C source diff --name-only | sort >final-files.txt
+            if test -f expected-files.txt; then
+              diff -u expected-files.txt final-files.txt
+            fi
+          fi
+          test -z "$(git -C carrier status --short --untracked-files=no)"
+
+      - name: Upload exact candidate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: biome-11174-current-main-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/current-main/
+          if-no-files-found: warn
+          retention-days: 30
